@@ -455,34 +455,36 @@ let otpStore = {};
 // ================= FORGOT PASSWORD SEND OTP =================
 router.post("/forgot-password", (req, res) => {
 
+    console.log("Forgot password API called");
+
     const { email } = req.body;
 
-    const sql =
-        "SELECT * FROM users WHERE email=?";
+    console.log("Email:", email);
+
+    const sql = "SELECT * FROM users WHERE email=?";
 
     db.query(sql, [email], (err, result) => {
 
-        if (err || result.length === 0) {
-            return res.status(400).json({
-                message: "Email not found"
-            });
+        console.log("DB Query Completed");
+
+        if (err) {
+            console.log(err);
+            return res.status(500).json({ message: "DB Error" });
         }
 
-        const otp =
-            Math.floor(
-                100000 + Math.random() * 900000
-            );
+        if (result.length === 0) {
+            return res.status(400).json({ message: "Email not found" });
+        }
 
-        otpStore[email] = otp;
+        console.log("User Found");
 
-        const mailOptions = {
-            from: process.env.MAIL_USER,
-            to: email,
-            subject: "Smart Bharat Password Reset OTP",
-            text: `Your OTP is ${otp}`
-        };
+        const otp = Math.floor(100000 + Math.random() * 900000);
+
+        console.log("Sending Mail...");
 
         transporter.sendMail(mailOptions, (err) => {
+
+            console.log("sendMail callback reached");
 
             if (err) {
                 console.log(err);
@@ -491,14 +493,13 @@ router.post("/forgot-password", (req, res) => {
                 });
             }
 
+            console.log("Mail Sent");
+
             res.json({
                 message: "OTP Sent Successfully"
             });
-
         });
-
     });
-
 });
 
 // ================= VERIFY OTP =================

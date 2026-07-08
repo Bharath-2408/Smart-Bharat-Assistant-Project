@@ -770,35 +770,6 @@ function searchScheme() {
     }
 }
 
-// ================= DARK MODE =================
-function toggleDarkMode() {
-
-    document.body.classList.toggle("dark-mode");
-
-    const themeBtn =
-        document.getElementById("themeBtn");
-
-    if (
-        document.body.classList.contains("dark-mode")
-    ) {
-        localStorage.setItem("theme", "dark");
-
-        if (themeBtn) {
-            themeBtn.innerHTML = "☀ Light Mode";
-        }
-
-    } else {
-
-        localStorage.setItem("theme", "light");
-
-        if (themeBtn) {
-            themeBtn.innerHTML = "🌙 Dark Mode";
-        }
-
-    }
-
-}
-
 window.addEventListener("load", function () {
 
     const theme =
@@ -1295,6 +1266,8 @@ showToast("Server Error","error");
 
 async function sendOTP() {
 
+    console.log("1. sendOTP started");
+
     try {
 
         const email = document
@@ -1302,68 +1275,32 @@ async function sendOTP() {
             .value
             .trim();
 
-        if (email === "") {
+        console.log("2. Email:", email);
 
-            showToast("Please Enter Email Address", "error");
-            return;
+        const url = `${API_URL}/forgot-password`;
 
-        }
+        console.log("3. URL:", url);
 
-        const response = await fetch(`${API_URL}/forgot-password`, {
-
+        const response = await fetch(url, {
             method: "POST",
-
             headers: {
                 "Content-Type": "application/json"
             },
-
-            body: JSON.stringify({
-                email
-            })
-
+            body: JSON.stringify({ email })
         });
+
+        console.log("4. Response received");
 
         const data = await response.json();
 
-        if (response.ok) {
+        console.log("5.", data);
 
-            showToast(data.message, "success");
+    } catch (err) {
 
-            localStorage.setItem("resetEmail", email);
-
-            setTimeout(() => {
-
-                const otp = prompt("Enter OTP");
-
-                if (otp) {
-
-                    verifyOTP(otp);
-
-                }
-
-            }, 1200);
-
-        }
-
-        else {
-
-            showToast(data.message, "error");
-
-        }
+        console.log("ERROR:", err);
 
     }
-
-    catch (err) {
-
-        console.log(err);
-
-        showToast("Server Error", "error");
-
-    }
-
 }
-
-
 
 // ================= VERIFY OTP =================
 
