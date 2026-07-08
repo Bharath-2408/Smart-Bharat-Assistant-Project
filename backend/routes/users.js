@@ -243,23 +243,42 @@ router.post("/apply", (req, res) => {
 
 // ================= ADMIN LOGIN =================
 router.post("/admin-login", (req, res) => {
-    const { username, password } = req.body;
 
-    const sql =
-        "SELECT * FROM admins WHERE username=? AND password=?";
+    const { email, password } = req.body;
 
-    db.query(sql, [username, password], (err, result) => {
+    const sql = "SELECT * FROM admins WHERE email=?";
+
+    db.query(sql, [email], async (err, result) => {
+
         if (err) {
             console.log(err);
-            return res.status(500).send("Login Failed");
+            return res.status(500).json({
+                message: "Server Error"
+            });
         }
 
-        if (result.length > 0) {
-            return res.send("Admin Login Successful");
+        if (result.length === 0) {
+            return res.status(401).json({
+                message: "Invalid Email or Password"
+            });
         }
 
-        res.send("Invalid Username or Password");
+        const admin = result[0];
+
+        const match = await bcrypt.compare(password, admin.password);
+
+        if (!match) {
+            return res.status(401).json({
+                message: "Invalid Email or Password"
+            });
+        }
+
+        return res.json({
+            message: "Admin Login Successful"
+        });
+
     });
+
 });
 
 // ================= GET ALL APPLICATIONS =================

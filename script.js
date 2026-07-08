@@ -344,23 +344,18 @@ async function submitApplication() {
 // ================= ADMIN LOGIN =================
 async function adminLogin() {
 
-    const username = document.getElementById("adminUsername").value.trim();
+    const email = document.getElementById("adminEmail").value.trim();
     const password = document.getElementById("adminPassword").value.trim();
 
-    // Validation
-    if (!username || !password) {
-
-        showToast("Please enter username and password", "error");
+    if (!email || !password) {
+        showToast("Please enter email and password", "error");
         return;
-
     }
 
     const loginBtn = document.querySelector("button[type='submit']");
-
     const originalText = loginBtn.innerHTML;
 
     loginBtn.disabled = true;
-
     loginBtn.innerHTML = `
         <i class="fa-solid fa-spinner fa-spin"></i>
         Logging in...
@@ -373,27 +368,23 @@ async function adminLogin() {
             method: "POST",
 
             headers: {
-
                 "Content-Type": "application/json"
-
             },
 
             body: JSON.stringify({
-
-                username,
+                email,
                 password
-
             })
 
         });
 
-        const data = await response.text();
+        const data = await response.json();
 
-        if (response.ok && data.trim() === "Admin Login Successful") {
+        if (response.ok) {
 
             localStorage.setItem("admin", "true");
 
-            showToast("Admin Login Successful", "success");
+            showToast(data.message, "success");
 
             setTimeout(() => {
 
@@ -401,28 +392,21 @@ async function adminLogin() {
 
             }, 1500);
 
-        }
+        } else {
 
-        else {
-
-            showToast("Invalid Username or Password", "error");
+            showToast(data.message, "error");
 
         }
 
-    }
-
-    catch (err) {
+    } catch (err) {
 
         console.error(err);
 
         showToast("Server Error", "error");
 
-    }
-
-    finally {
+    } finally {
 
         loginBtn.disabled = false;
-
         loginBtn.innerHTML = originalText;
 
     }
