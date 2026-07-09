@@ -13417,3 +13417,17 @@ td{
     vertical-align:middle;
     text-align:center;
 }
+
+.modal-buttons{
+
+    display:flex;
+    gap:15px;
+    margin-top:20px;
+
+}
+
+.modal-buttons button{
+
+    flex:1;
+
+}

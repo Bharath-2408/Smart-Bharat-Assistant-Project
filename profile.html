@@ -30,8 +30,6 @@ rel="stylesheet">
 <link rel="stylesheet"
 href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 
-<script src="script.js"></script>
-
 </head>
 
 <body>
@@ -463,27 +461,58 @@ Success
 
         <div class="modal-buttons">
 
-            <button
-                class="status-btn"
-                onclick="submitPasswordChange()">
+    <button
+        class="logout-btn"
+        onclick="closePasswordModal()">
 
-                Update Password
+        Cancel
 
-            </button>
+    </button>
 
-            <button
-                class="logout-btn"
-                onclick="closePasswordModal()">
+    <button
+        class="status-btn"
+        onclick="submitPasswordChange()">
 
-                Cancel
+        Update Password
 
-            </button>
+    </button>
 
-        </div>
+</div>
 
     </div>
 
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const oldPassword = document.getElementById("oldPassword");
+    const newPassword = document.getElementById("newPassword");
+    const confirmPassword = document.getElementById("confirmNewPassword");
+
+    oldPassword.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            newPassword.focus();
+        }
+    });
+
+    newPassword.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            confirmPassword.focus();
+        }
+    });
+
+    confirmPassword.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            submitPasswordChange();
+        }
+    });
+
+});
+</script>
 
 </body>
 

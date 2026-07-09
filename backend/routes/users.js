@@ -455,67 +455,137 @@ let otpStore = {};
 // ================= FORGOT PASSWORD SEND OTP =================
 router.post("/forgot-password", (req, res) => {
 
-    console.log("Forgot password API called");
-
     const { email } = req.body;
 
-    console.log("Email:", email);
+    if (!email) {
+
+        return res.status(400).json({
+            message: "Email is required"
+        });
+
+    }
 
     const sql = "SELECT * FROM users WHERE email=?";
 
     db.query(sql, [email], (err, result) => {
 
-        console.log("DB Query Completed");
-
         if (err) {
+
             console.log(err);
-            return res.status(500).json({ message: "DB Error" });
+
+            return res.status(500).json({
+                message: "Database Error"
+            });
+
         }
 
         if (result.length === 0) {
-            return res.status(400).json({ message: "Email not found" });
-        }
 
-        console.log("User Found");
+            return res.status(400).json({
+                message: "Email not found"
+            });
+
+        }
 
         const otp = Math.floor(100000 + Math.random() * 900000);
 
-        console.log("Sending Mail...");
+        otpStore[email] = otp;
 
-        transporter.sendMail(mailOptions, (err) => {
+        if (!transporter) {
 
-            console.log("sendMail callback reached");
+            return res.status(500).json({
+                message: "Mail Server Not Configured"
+            });
 
-            if (err) {
-                console.log(err);
+        }
+
+        const mailOptions = {
+
+            from: process.env.MAIL_USER,
+
+            to: email,
+
+            subject: "Smart Bharat Assistant Password Reset OTP",
+
+            text:
+`Your OTP for password reset is: ${otp}
+
+This OTP is valid for 10 minutes.
+
+Do not share this OTP with anyone.
+
+- Smart Bharat Assistant`
+
+        };
+
+        transporter.sendMail(mailOptions, (mailErr, info) => {
+
+            if (mailErr) {
+
+                console.log("Mail Error:", mailErr);
+
                 return res.status(500).json({
                     message: "OTP Send Failed"
                 });
+
             }
 
-            console.log("Mail Sent");
+            console.log("Mail Sent:", info.response);
 
-            res.json({
+            res.status(200).json({
                 message: "OTP Sent Successfully"
             });
+
         });
+
     });
+
 });
 
-// ================= VERIFY OTP =================
 router.post("/verify-otp", (req, res) => {
 
-    const { email, otp } = req.body;
+    const { email, otp, newPassword } = req.body;
 
-    if (otpStore[email] == otp) {
-        return res.json({
-            message: "OTP Verified"
+    if (!otpStore[email]) {
+
+        return res.status(400).json({
+            message: "OTP Expired"
         });
+
     }
 
-    res.status(400).json({
-        message: "Invalid OTP"
-    });
+    if (otpStore[email] != otp) {
+
+        return res.status(400).json({
+            message: "Invalid OTP"
+        });
+
+    }
+
+    const sql =
+        "UPDATE users SET password=? WHERE email=?";
+
+    db.query(
+        sql,
+        [newPassword, email],
+        (err) => {
+
+            if (err) {
+
+                return res.status(500).json({
+                    message: "Database Error"
+                });
+
+            }
+
+            delete otpStore[email];
+
+            res.json({
+                message: "Password Reset Successful"
+            });
+
+        }
+    );
 
 });
 

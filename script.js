@@ -1266,51 +1266,21 @@ showToast("Server Error","error");
 
 async function sendOTP() {
 
-    console.log("1. sendOTP started");
+    const email = document
+        .getElementById("forgotEmail")
+        .value
+        .trim();
 
-    try {
+    if (!email) {
 
-        const email = document
-            .getElementById("forgotEmail")
-            .value
-            .trim();
-
-        console.log("2. Email:", email);
-
-        const url = `${API_URL}/forgot-password`;
-
-        console.log("3. URL:", url);
-
-        const response = await fetch(url, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ email })
-        });
-
-        console.log("4. Response received");
-
-        const data = await response.json();
-
-        console.log("5.", data);
-
-    } catch (err) {
-
-        console.log("ERROR:", err);
+        showToast("Please enter your registered email", "error");
+        return;
 
     }
-}
-
-// ================= VERIFY OTP =================
-
-async function verifyOTP(otp) {
 
     try {
 
-        const email = localStorage.getItem("resetEmail");
-
-        const response = await fetch(`${API_URL}/verify-otp`, {
+        const response = await fetch(`${API_URL}/forgot-password`, {
 
             method: "POST",
 
@@ -1319,10 +1289,7 @@ async function verifyOTP(otp) {
             },
 
             body: JSON.stringify({
-
-                email,
-                otp
-
+                email
             })
 
         });
@@ -1331,19 +1298,13 @@ async function verifyOTP(otp) {
 
         if (response.ok) {
 
-            showToast("OTP Verified Successfully", "success");
+            localStorage.setItem("resetEmail", email);
 
-            setTimeout(() => {
+            showToast(data.message, "success");
 
-                const newPassword = prompt("Enter New Password");
+            document.getElementById("otpSection").style.display = "block";
 
-                if (newPassword) {
-
-                    resetPassword(newPassword);
-
-                }
-
-            }, 1200);
+            document.getElementById("otp").focus();
 
         }
 
@@ -1365,37 +1326,61 @@ async function verifyOTP(otp) {
 
 }
 
-// ================= RESET PASSWORD =================
+// ================= VERIFY OTP & RESET PASSWORD =================
 
-async function resetPassword(newPassword) {
+async function verifyAndResetPassword() {
+
+    const email =
+        localStorage.getItem("resetEmail");
+
+    const otp =
+        document.getElementById("otp").value.trim();
+
+    const newPassword =
+        document.getElementById("resetPassword").value;
+
+    const confirmPassword =
+        document.getElementById("confirmResetPassword").value;
+
+    if (!otp || !newPassword || !confirmPassword) {
+
+        showToast("Please fill all fields", "warning");
+        return;
+
+    }
+
+    if (newPassword.length < 8) {
+
+        showToast("Password must be at least 8 characters", "warning");
+        return;
+
+    }
+
+    if (newPassword !== confirmPassword) {
+
+        showToast("Passwords do not match", "error");
+        return;
+
+    }
 
     try {
 
-        const email = localStorage.getItem("resetEmail");
+        const response = await fetch(
+            `${API_URL}/verify-otp`,
+            {
+                method: "POST",
 
-        if (!newPassword || newPassword.trim() === "") {
+                headers: {
+                    "Content-Type": "application/json"
+                },
 
-            showToast("Please Enter New Password", "error");
-            return;
-
-        }
-
-        const response = await fetch(`${API_URL}/reset-password`, {
-
-            method: "POST",
-
-            headers: {
-                "Content-Type": "application/json"
-            },
-
-            body: JSON.stringify({
-
-                email,
-                newPassword
-
-            })
-
-        });
+                body: JSON.stringify({
+                    email,
+                    otp,
+                    newPassword
+                })
+            }
+        );
 
         const data = await response.json();
 
@@ -1430,8 +1415,6 @@ async function resetPassword(newPassword) {
     }
 
 }
-
-
 
 // ================= TOAST =================
 
@@ -1486,3 +1469,63 @@ function showToast(message, type = "success") {
 
 }
 
+function openPasswordModal() {
+
+    document.getElementById("passwordModal").style.display = "flex";
+
+}
+
+function closePasswordModal() {
+
+    document.getElementById("passwordModal").style.display = "none";
+
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const oldPassword = document.getElementById("oldPassword");
+    const newPassword = document.getElementById("newPassword");
+    const confirmPassword = document.getElementById("confirmNewPassword");
+
+    // Profile page இல்லையென்றால் exit
+    if (!oldPassword || !newPassword || !confirmPassword) {
+        return;
+    }
+
+    // Old Password -> New Password
+    oldPassword.addEventListener("keydown", function (e) {
+
+        if (e.key === "Enter") {
+
+            e.preventDefault();
+            newPassword.focus();
+
+        }
+
+    });
+
+    // New Password -> Confirm Password
+    newPassword.addEventListener("keydown", function (e) {
+
+        if (e.key === "Enter") {
+
+            e.preventDefault();
+            confirmPassword.focus();
+
+        }
+
+    });
+
+    // Confirm Password -> Submit
+    confirmPassword.addEventListener("keydown", function (e) {
+
+        if (e.key === "Enter") {
+
+            e.preventDefault();
+            submitPasswordChange();
+
+        }
+
+    });
+
+});
